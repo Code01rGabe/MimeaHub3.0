@@ -8,23 +8,77 @@ const diseaseDatabase = {
         "scanning": "Analyzing leaf image...",
         "scan_complete": "Scan Complete!",
         "diseases": {
-            "tomato_late_blight": {
-                "name": "Tomato Late Blight",
-                "organic": "Apply copper-based fungicides or homemade baking soda sprays. Remove and burn infected leaves immediately.",
-                "chemical": "Use Mancozeb or Ridomil Gold according to manufacturer packages.",
-                "prevention": "Ensure wide spacing between plants to maximize airflow. Avoid overhead watering; water the soil directly."
-            },
-            "potato_early_blight": {
-                "name": "Potato Early Blight",
-                "organic": "Apply neem oil extract or a decoction of garlic sprays every 7 days.",
-                "chemical": "Spray Chlorothalonil or Azoxystrobin based chemical packages.",
-                "prevention": "Rotate crops annually. Do not plant potatoes where tomatoes or peppers grew last season."
-            },
-            "healthy": {
-                "name": "Healthy Leaf",
-                "organic": "No treatment required! Maintain good soil fertility with organic compost.",
+            "healthy tomato": {
+                "name": "Healthy Tomato",
+                "organic": "No treatment needed! Maintain good soil with compost and mulch.",
                 "chemical": "No chemical treatment needed.",
-                "prevention": "Continue monitoring crops weekly for early signs of pests or spotting."
+                "prevention": "Continue regular monitoring, water consistently at base, and rotate crops annually."
+            },
+            "tomato mosaic virus": {
+                "name": "Tomato Mosaic Virus (ToMV)",
+                "organic": "Remove and destroy infected plants immediately. Disinfect tools with 10% bleach solution. Control aphids with neem oil spray.",
+                "chemical": "No direct chemical treatment for virus. Control aphid vectors with imidacloprid or acetamiprid insecticides.",
+                "prevention": "Use resistant varieties. Wash hands before handling plants. Don't smoke near plants. Control weeds that harbor the virus."
+            },
+            "tomato yellow curl virus": {
+                "name": "Tomato Yellow Leaf Curl Virus (TYLCV)",
+                "organic": "Remove infected plants. Use neem oil or insecticidal soap against whiteflies. Install yellow sticky traps.",
+                "chemical": "Control whitefly vectors with imidacloprid, thiamethoxam, or pyriproxyfen. Apply at first sign of whiteflies.",
+                "prevention": "Use resistant varieties. Install fine mesh netting. Remove weeds that host whiteflies. Plant early to avoid peak whitefly season."
+            },
+            "tomato spider mites": {
+                "name": "Tomato Spider Mites",
+                "organic": "Spray plants with strong water jet to dislodge mites. Apply neem oil or insecticidal soap every 5-7 days. Introduce predatory mites.",
+                "chemical": "Use abamectin, spiromesifen, or bifenthrin. Rotate miticides to prevent resistance.",
+                "prevention": "Increase humidity around plants. Avoid water stress. Remove dust from leaves. Keep garden free of weeds."
+            },
+            "tomato septoria leaf spot": {
+                "name": "Tomato Septoria Leaf Spot",
+                "organic": "Remove infected lower leaves. Apply copper-based fungicides every 7-10 days. Use baking soda spray (1 tbsp + 1 tsp soap + 1 gallon water).",
+                "chemical": "Chlorothalonil or Mancozeb applied every 7-14 days. Start before disease appears.",
+                "prevention": "Mulch heavily to prevent soil splash. Water at base only. Rotate crops for 3 years. Space plants for airflow."
+            },
+            "tomato leaf mold": {
+                "name": "Tomato Leaf Mold (Passalora fulva)",
+                "organic": "Improve ventilation. Remove infected leaves. Apply copper fungicide or sulfur spray. Use compost tea as foliar spray.",
+                "chemical": "Chlorothalonil, Mancozeb, or Azoxystrobin. Apply preventively in humid conditions.",
+                "prevention": "Reduce humidity in greenhouse. Space plants properly. Water at base. Use drip irrigation. Ensure good air circulation."
+            },
+            "tomato late blight": {
+                "name": "Tomato Late Blight (Phytophthora infestans)",
+                "organic": "Apply copper-based fungicides every 5-7 days. Baking soda spray. Remove and destroy infected plants immediately.",
+                "chemical": "Mancozeb, Ridomil Gold, or Chlorothalonil. Apply preventively before disease appears.",
+                "prevention": "Plant resistant varieties. Space plants for airflow. Water at base. Monitor weather for cool, wet conditions."
+            },
+            "tomato early blight": {
+                "name": "Tomato Early Blight (Alternaria solani)",
+                "organic": "Remove infected lower leaves. Apply neem oil or copper spray every 7 days. Use compost tea to boost immunity.",
+                "chemical": "Chlorothalonil, Mancozeb, or Azoxystrobin. Apply at first sign of disease.",
+                "prevention": "Mulch around plants. Rotate crops for 3-4 years. Stake plants. Water at base. Remove plant debris after harvest."
+            },
+            "tomato bacterial spot": {
+                "name": "Tomato Bacterial Spot (Xanthomonas)",
+                "organic": "Remove infected leaves and fruits. Apply copper-based bactericides. Use streptomycin if available organically.",
+                "chemical": "Copper hydroxide + mancozeb combination. Acibenzolar-S-methyl (Actigard) as preventive.",
+                "prevention": "Use certified disease-free seeds. Avoid overhead watering. Don't handle wet plants. Rotate crops. Disinfect tools and stakes."
+            },
+            "healthy potato": {
+                "name": "Healthy Potato",
+                "organic": "No treatment needed! Maintain soil fertility with compost and proper hilling.",
+                "chemical": "No chemical treatment needed.",
+                "prevention": "Use certified seed potatoes. Practice crop rotation. Monitor for Colorado potato beetles and aphids."
+            },
+            "potato late blight": {
+                "name": "Potato Late Blight (Phytophthora infestans)",
+                "organic": "Remove and destroy infected foliage. Apply copper fungicides preventively. Hill soil around plants.",
+                "chemical": "Ridomil Gold, Mancozeb, Chlorothalonil, or Fluazinam. Apply preventively before wet periods.",
+                "prevention": "Use certified seed potatoes. Plant resistant varieties. Destroy volunteer potatoes. Harvest in dry conditions."
+            },
+            "potato early blight": {
+                "name": "Potato Early Blight (Alternaria solani)",
+                "organic": "Remove infected leaves. Apply neem oil or copper spray every 7-10 days. Maintain proper plant nutrition.",
+                "chemical": "Chlorothalonil, Mancozeb, or Azoxystrobin. Apply preventively.",
+                "prevention": "Rotate crops for 3-4 years. Use certified seed. Avoid overhead irrigation. Harvest when vines are dry."
             }
         }
     },
@@ -34,23 +88,77 @@ const diseaseDatabase = {
         "scanning": "Inachanganua picha ya jani...",
         "scan_complete": "Uchunguzi Umekamilika!",
         "diseases": {
-            "tomato_late_blight": {
-                "name": "Mnyauko Chelewa wa Nyanya (Late Blight)",
-                "organic": "Nyunyizia mchanganyiko wa dawa za asili za kopa au magadi (baking soda). Ng'oa na uchome moto majani yaliyoambukizwa mara moja.",
-                "chemical": "Tumia dawa za Mancozeb au Ridomil Gold kulingana na maelekezo ya kifurushi.",
-                "prevention": "Hakikisha nafasi kubwa kati ya mimea ili kuruhusu hewa kupita. Epuka kumwagilia maji juu ya majani; mwagilia udongo moja kwa moja."
-            },
-            "potato_early_blight": {
-                "name": "Mnyauko Mapema wa Viazi (Early Blight)",
-                "organic": "Nyunyizia mafuta ya mwarobaini (neem oil) au maji ya kitunguu saumu kila baada ya siku 7.",
-                "chemical": "Nyunyizia kemikali za Chlorothalonil au Azoxystrobin zilizoidhinishwa.",
-                "prevention": "Badilisha mazao kila mwaka (crop rotation). Usipande viazi ambapo nyanya au pilipili zilipandwa msimu uliopita."
-            },
-            "healthy": {
-                "name": "Jani Lenye Afya",
-                "organic": "Hakuna matibabu yanayohitajika! Dumisha rutuba ya udongo kwa kutumia mbolea ya mboji.",
+            "healthy tomato": {
+                "name": "Nyanya Yenye Afya",
+                "organic": "Hakuna matibabu yanayohitajika! Dumisha udongo mzuri kwa mbolea na matandazo.",
                 "chemical": "Hakuna matibabu ya kemikali yanayohitajika.",
-                "prevention": "Endelea kukagua mazao kila wiki ili kuona dalili za mapema za wadudu au madoa."
+                "prevention": "Endelea kufuatilia mara kwa mara, kumwagilia kwenye shina, na kubadilisha mazao kila mwaka."
+            },
+            "tomato mosaic virus": {
+                "name": "Virusi vya Mosai ya Nyanya (ToMV)",
+                "organic": "Ng'oa na uharibu mimea iliyoambukizwa. Safisha vifaa kwa 10% bleach. Dhibiti vidukari kwa dawa ya mwarobaini.",
+                "chemical": "Hakuna tiba ya moja kwa moja. Dhibiti vidukari kwa imidacloprid au acetamiprid.",
+                "prevention": "Tumia aina sugu. Osha mikono kabla ya kushika mimea. Usivute sigara karibu na mimea."
+            },
+            "tomato yellow curl virus": {
+                "name": "Virusi vya Majani ya Njano (TYLCV)",
+                "organic": "Ondoa mimea iliyoambukizwa. Tumia mwarobaini dhidi ya nzi weupe. Weka mitego ya kunata ya njano.",
+                "chemical": "Dhibiti nzi weupe kwa imidacloprid, thiamethoxam, au pyriproxyfen.",
+                "prevention": "Tumia aina sugu. Weka neti laini. Ondoa magugu. Panda mapema kuepuka msimu wa nzi weupe."
+            },
+            "tomato spider mites": {
+                "name": "Utitiri wa Nyanya",
+                "organic": "Nyunyizia maji kwa nguvu kuwaondoa. Tumia mwarobaini kila siku 5-7. Leta utitiri wanaowawinda.",
+                "chemical": "Tumia abamectin, spiromesifen, au bifenthrin. Zungusha dawa kuzuia kinga.",
+                "prevention": "Ongeza unyevu karibu na mimea. Epuka mkazo wa maji. Ondoa vumbi kwenye majani."
+            },
+            "tomato septoria leaf spot": {
+                "name": "Madoa ya Septoria ya Nyanya",
+                "organic": "Ondoa majani ya chini yaliyoambukizwa. Tumia dawa ya kopa kila siku 7-10.",
+                "chemical": "Chlorothalonil au Mancozeb kila siku 7-14. Anza kabla ya ugonjwa kuonekana.",
+                "prevention": "Weka matandazo mazito. Mwagilia kwenye shina tu. Badilisha mazao kwa miaka 3."
+            },
+            "tomato leaf mold": {
+                "name": "Kuvu ya Majani ya Nyanya",
+                "organic": "Boresha uingizaji hewa. Ondoa majani yaliyoambukizwa. Tumia dawa ya kopa au salfa.",
+                "chemical": "Chlorothalonil, Mancozeb, au Azoxystrobin. Weka kinga katika hali ya unyevu.",
+                "prevention": "Punguza unyevu kwenye nyumba ya kitalu. Weka nafasi kati ya mimea. Mwagilia kwenye shina."
+            },
+            "tomato late blight": {
+                "name": "Mnyauko Chelewa wa Nyanya",
+                "organic": "Tumia dawa ya kopa kila siku 5-7. Dawa ya magadi. Ondoa na uharibu mimea mara moja.",
+                "chemical": "Mancozeb, Ridomil Gold, au Chlorothalonil. Weka kinga kabla ya ugonjwa.",
+                "prevention": "Panda aina sugu. Weka nafasi kwa hewa. Mwagilia kwenye shina. Fuatilia hali ya hewa."
+            },
+            "tomato early blight": {
+                "name": "Mnyauko Mapema wa Nyanya",
+                "organic": "Ondoa majani ya chini. Tumia mwarobaini au kopa kila siku 7. Tumia chai ya mbolea.",
+                "chemical": "Chlorothalonil, Mancozeb, au Azoxystrobin. Weka kwenye dalili za kwanza.",
+                "prevention": "Weka matandazo. Badilisha mazao kwa miaka 3-4. Weka vijiti. Mwagilia kwenye shina."
+            },
+            "tomato bacterial spot": {
+                "name": "Madoa ya Bakteria ya Nyanya",
+                "organic": "Ondoa majani na matunda yaliyoambukizwa. Tumia dawa ya kopa.",
+                "chemical": "Mchanganyiko wa kopa + mancozeb. Acibenzolar-S-methyl kama kinga.",
+                "prevention": "Tumia mbegu zisizo na ugonjwa. Epuka kumwagilia juu. Usishike mimea ikiwa mvua."
+            },
+            "healthy potato": {
+                "name": "Viazi Vyenye Afya",
+                "organic": "Hakuna matibabu yanayohitajika! Dumisha rutuba ya udongo kwa mbolea.",
+                "chemical": "Hakuna matibabu ya kemikali yanayohitajika.",
+                "prevention": "Tumia mbegu bora. Badilisha mazao. Fuatilia wadudu kama Colorado beetle."
+            },
+            "potato late blight": {
+                "name": "Mnyauko Chelewa wa Viazi",
+                "organic": "Ondoa na uharibu majani. Tumia kopa kama kinga. Weka udongo kuzunguka mimea.",
+                "chemical": "Ridomil Gold, Mancozeb, Chlorothalonil, au Fluazinam.",
+                "prevention": "Tumia mbegu bora. Panda aina sugu. Haribu viazi vya kujitolea. Vuna wakati wa kiangazi."
+            },
+            "potato early blight": {
+                "name": "Mnyauko Mapema wa Viazi",
+                "organic": "Ondoa majani yaliyoambukizwa. Tumia mwarobaini au kopa kila siku 7-10.",
+                "chemical": "Chlorothalonil, Mancozeb, au Azoxystrobin. Weka kinga.",
+                "prevention": "Badilisha mazao kwa miaka 3-4. Tumia mbegu bora. Epuka kumwagilia juu."
             }
         }
     }

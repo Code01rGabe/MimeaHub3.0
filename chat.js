@@ -143,6 +143,8 @@ function getLocalResponse(message) {
     if (msg.includes('who are you') || msg.includes('what are you')) {
         return "I'm the MimeaHub Farm Assistant 🤖! I help farmers diagnose plant diseases, recommend treatments (organic & chemical), and share farming best practices. I work completely offline so you can use me anywhere!";
     }
+
+
     
     // =====================================================================
     // TOMATO DISEASES
@@ -241,6 +243,48 @@ function getLocalResponse(message) {
     if (msg.includes('pest') || msg.includes('insect') || msg.includes('wadudu')) {
         return "🐛 General Pest Management:\n\n1. Identify the pest first\n2. Start with physical controls (hand pick, water spray)\n3. Use organic sprays (neem, soap, garlic)\n4. Introduce beneficial insects\n5. Use chemicals only as last resort\n6. Practice prevention: healthy soil, companion planting, crop rotation";
     }
+
+    // Add these inside the getLocalResponse function, before the default return
+
+// Tomato Mosaic Virus
+if (msg.includes('mosaic') || msg.includes('mosai')) {
+    return "🦠 Tomato Mosaic Virus (ToMV): Causes light/dark green mottling on leaves, stunted growth, and distorted fruits. Spread by aphids, tools, and hands. Remove infected plants immediately. Disinfect tools with 10% bleach. Control aphids with neem oil. Prevention: Use resistant varieties, wash hands before handling plants.";
+}
+
+// Tomato Yellow Curl Virus
+if (msg.includes('curl') || msg.includes('yellow curl') || msg.includes('njano')) {
+    return "🟡 Tomato Yellow Leaf Curl Virus (TYLCV): Leaves curl upward and turn yellow, plant growth stunts. Transmitted by whiteflies. Remove infected plants. Use yellow sticky traps and neem oil for whiteflies. Prevention: resistant varieties, fine mesh netting, remove weed hosts.";
+}
+
+// Spider Mites
+if (msg.includes('spider mite') || msg.includes('utitiri') || msg.includes('web')) {
+    return "🕷️ Spider Mites: Tiny pests causing stippled yellow leaves and fine webbing. Thrive in hot, dry conditions. Spray plants with strong water jet, apply neem oil every 5-7 days. Increase humidity. For severe cases, use miticides. Prevention: avoid water stress, keep leaves dust-free.";
+}
+
+// Septoria Leaf Spot
+if (msg.includes('septoria') || msg.includes('leaf spot')) {
+    return "🍂 Septoria Leaf Spot: Small dark spots with light centers on lower leaves first, then spreads upward. Remove infected leaves immediately. Apply copper fungicide every 7-10 days. Mulch heavily to prevent soil splash. Water at base only. Rotate crops for 3 years.";
+}
+
+// Leaf Mold
+if (msg.includes('leaf mold') || msg.includes('kuvu ya majani')) {
+    return "🌫️ Tomato Leaf Mold (Passalora fulva): Yellow spots on upper leaf surface, olive-green fuzzy growth underneath. Common in greenhouses and humid conditions. Improve ventilation, reduce humidity. Apply copper fungicide or sulfur. Prevention: space plants properly, drip irrigation.";
+}
+
+// Bacterial Spot
+if (msg.includes('bacterial spot') || msg.includes('bakteria')) {
+    return "🦠 Bacterial Spot: Dark, water-soaked spots on leaves and fruits. Spread by rain splash and contaminated tools. Remove infected parts. Apply copper-based bactericides. Avoid overhead watering. Don't handle wet plants. Use certified disease-free seeds.";
+}
+
+// Healthy tomato
+if ((msg.includes('healthy') || msg.includes('afya')) && msg.includes('tomato')) {
+    return "🍅✅ Healthy Tomato Plants: Look for vibrant green leaves without spots, strong stems, and regular flowering. Maintain with consistent watering, mulching, and compost. Monitor weekly for early signs of pests. Prevention is key: crop rotation, proper spacing, and resistant varieties!";
+}
+
+// Healthy potato
+if ((msg.includes('healthy') || msg.includes('afya')) && msg.includes('potato')) {
+    return "🥔✅ Healthy Potato Plants: Look for dark green leaves, sturdy stems, and proper tuber development. Hill soil around plants. Maintain even moisture. Watch for Colorado potato beetles. Use certified seed potatoes and practice 3-year crop rotation.";
+}
     
     // =====================================================================
     // CROP MANAGEMENT
