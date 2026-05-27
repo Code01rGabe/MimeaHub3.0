@@ -1,0 +1,650 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MimeaHub — Dashboard</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'><text y='14' font-size='14'>🌱</text></svg>">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@teachablemachine/image@0.8.3/dist/teachablemachine-image.min.js"></script>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <style>
+
+/* Add this at the VERY TOP of your dashboard.html <style> section */
+body { 
+    overflow-y: auto !important; 
+    height: auto !important; 
+    min-height: 100vh !important; 
+}
+
+.dashboard-shell { 
+    height: auto !important; 
+    min-height: 100vh !important; 
+}
+
+.dashboard-grid { 
+    overflow: visible !important; 
+    min-height: auto !important; 
+    height: auto !important; 
+}
+
+.column { 
+    overflow: visible !important; 
+    min-height: auto !important; 
+    height: auto !important; 
+}
+
+
+
+        :root {
+            --font-xs: 10px;
+            --font-sm: 11px;
+            --font-md: 12px;
+            --gap: 8px;
+        }
+        
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: 'Plus Jakarta Sans', sans-serif; overflow-x: hidden; height: 100vh; }
+        
+        .dashboard-shell { padding: 8px; height: 100vh; display: flex; flex-direction: column; max-width: 100%; }
+        
+        .app-navbar {
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 0 16px; height: 42px; border-radius: 8px; flex-shrink: 0;
+            background: var(--bg-panel); border: 1px solid var(--border-panel); margin-bottom: 8px;
+        }
+        .nav-brand { display: flex; align-items: center; gap: 8px; }
+        .nav-actions { display: flex; align-items: center; gap: 6px; }
+        
+        .dashboard-grid {
+            flex: 1; display: grid; grid-template-columns: 1.2fr 0.8fr;
+            gap: var(--gap); min-height: 0; overflow: hidden;
+        }
+        .column { display: flex; flex-direction: column; gap: var(--gap); min-height: 0; overflow: hidden; }
+        
+        .card {
+            padding: 10px; border-radius: 8px; background: var(--bg-panel);
+            border: 1px solid var(--border-panel); display: flex; flex-direction: column;
+        }
+        .card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; flex-shrink: 0; }
+        .card-header h3 { font-size: var(--font-sm); font-weight: 600; }
+        
+        .viewport-wrapper {
+            aspect-ratio: 16/10; border-radius: 6px; overflow: hidden; margin-bottom: 6px;
+            flex-shrink: 0; background: #0d1117; display: flex; align-items: center; justify-content: center;
+        }
+        .viewport-wrapper video, .viewport-wrapper img { width: 100%; height: 100%; object-fit: cover; }
+        .stage-placeholder { text-align: center; color: var(--text-secondary); font-size: var(--font-xs); }
+        .placeholder-icon { font-size: 28px; margin-bottom: 4px; }
+        
+        .button-row { display: flex; gap: 4px; flex-shrink: 0; }
+        .btn { padding: 6px 12px; border-radius: 5px; font-size: var(--font-xs); font-weight: 600; cursor: pointer; border: none; font-family: inherit; }
+        .btn-primary { background: var(--accent-blue); color: #fff; }
+        .btn-success { background: var(--accent-green); color: #fff; }
+        .btn-outline { background: var(--bg-hollow); color: var(--text-primary); border: 1px solid var(--border-panel); }
+        
+        .results-scroll { flex: 1; overflow-y: auto; min-height: 0; }
+        .result-main { display: flex; justify-content: space-between; align-items: center; padding: 8px; border-radius: 6px; background: var(--bg-hollow); margin-bottom: 6px; }
+        .result-main h2 { font-size: 16px; font-weight: 700; margin: 2px 0; }
+        .label { font-size: 8px; text-transform: uppercase; color: var(--text-secondary); letter-spacing: 0.5px; }
+        .location-row { font-size: 9px; color: var(--text-secondary); }
+        .confidence-ring { position: relative; width: 40px; height: 40px; flex-shrink: 0; }
+        .ring-bg { fill: none; stroke: var(--border-panel); stroke-width: 3; }
+        .ring-fill { fill: none; stroke: var(--accent-green); stroke-width: 3; stroke-linecap: round; }
+        .confidence-text { position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%); font-size: 10px; font-weight: 700; color: var(--accent-green); font-family: 'JetBrains Mono', monospace; }
+        
+        .treatment-cards { display: flex; flex-direction: column; gap: 3px; }
+        .treatment-card { display: flex; gap: 6px; padding: 6px 8px; border-radius: 5px; background: var(--bg-hollow); border-left: 2px solid transparent; }
+        .treatment-card.organic { border-left-color: var(--accent-green); }
+        .treatment-card.chemical { border-left-color: var(--accent-blue); }
+        .treatment-card.prevention { border-left-color: var(--accent-purple); }
+        .treatment-icon { font-size: 14px; flex-shrink: 0; }
+        .treatment-content h5 { font-size: 9px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.3px; margin: 0 0 1px 0; }
+        .organic h5 { color: var(--accent-green); } .chemical h5 { color: var(--accent-blue); } .prevention h5 { color: var(--accent-purple); }
+        .treatment-content p { font-size: 9px; color: var(--text-secondary); margin: 0; line-height: 1.3; }
+        
+        .export-row { display: flex; gap: 4px; margin-top: 6px; }
+        .export-row .btn { flex: 1; }
+        
+        .stats-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px; flex-shrink: 0; }
+        .stat-mini { padding: 8px 4px; border-radius: 6px; text-align: center; background: var(--bg-panel); border: 1px solid var(--border-panel); }
+        .stat-mini.healthy { border-top: 2px solid var(--accent-green); }
+        .stat-mini.diseased { border-top: 2px solid var(--accent-red); }
+        .stat-mini.today { border-top: 2px solid var(--accent-blue); }
+        .stat-mini-value { font-size: 18px; font-weight: 700; font-family: 'JetBrains Mono', monospace; display: block; }
+        .stat-mini-label { font-size: 8px; color: var(--text-secondary); text-transform: uppercase; }
+        
+        .search-input { padding: 5px 8px; font-size: var(--font-xs); border-radius: 5px; margin-bottom: 4px; flex-shrink: 0; background: var(--bg-hollow); border: 1px solid var(--border-panel); color: var(--text-primary); outline: none; font-family: inherit; }
+        .search-input:focus { border-color: var(--accent-blue); }
+        .scroll-list { flex: 1; overflow-y: auto; min-height: 0; display: flex; flex-direction: column; gap: 3px; }
+        .history-item { padding: 6px 8px; border-radius: 5px; background: var(--bg-hollow); cursor: pointer; display: flex; justify-content: space-between; align-items: center; font-size: 10px; border: 1px solid transparent; }
+        .history-item:hover { border-color: var(--accent-blue); }
+        .history-disease { font-weight: 600; }
+        .history-meta { font-size: 8px; color: var(--text-secondary); display: flex; gap: 6px; }
+        .history-confidence { font-family: 'JetBrains Mono', monospace; color: var(--accent-green); font-weight: 600; }
+        
+        .analytics-list { display: flex; flex-direction: column; gap: 5px; }
+        .analytics-row { display: flex; flex-direction: column; gap: 2px; }
+        .analytics-meta { display: flex; justify-content: space-between; font-size: 9px; color: var(--text-secondary); }
+        .analytics-count { font-weight: 600; color: var(--text-primary); }
+        .bar-track { height: 4px; background: var(--bg-hollow); border-radius: 2px; overflow: hidden; }
+        .bar-fill { height: 100%; background: var(--accent-blue); border-radius: 2px; }
+        
+        #disease-map { height: 140px !important; border-radius: 6px; overflow: hidden; }
+        .map-filters { display: flex; gap: 3px; margin-bottom: 4px; }
+        .map-filter-btn { padding: 2px 7px; border-radius: 8px; border: 1px solid var(--border-panel); background: var(--bg-hollow); color: var(--text-secondary); cursor: pointer; font-size: 8px; font-family: inherit; }
+        .map-filter-btn.active { background: var(--accent-blue); color: #fff; border-color: var(--accent-blue); }
+        
+        .btn-text { background: none; border: none; color: var(--accent-red); cursor: pointer; font-size: 9px; font-family: inherit; }
+        .status-badge { font-size: 8px; padding: 2px 7px; border-radius: 10px; font-weight: 600; text-transform: uppercase; }
+        .status-ready { background: rgba(63,185,80,0.15); color: var(--accent-green); }
+        .empty-state { font-size: 10px; color: var(--text-secondary); text-align: center; padding: 10px; }
+        .hidden { display: none !important; }
+        
+        .user-greeting { font-size: 10px; color: var(--text-secondary); }
+        .lang-pill { padding: 3px 7px; border-radius: 5px; font-size: 9px; background: var(--bg-hollow); color: var(--text-primary); border: 1px solid var(--border-panel); cursor: pointer; font-family: inherit; }
+        .icon-btn { background: none; border: 1px solid var(--border-panel); padding: 3px 7px; border-radius: 5px; cursor: pointer; font-size: 12px; }
+        
+        *::-webkit-scrollbar { width: 3px; }
+        *::-webkit-scrollbar-track { background: transparent; }
+        *::-webkit-scrollbar-thumb { background: var(--border-panel); border-radius: 2px; }
+        
+        /* ================================================================ */
+        /* FLOATING CHAT WIDGET - MIMEAHUB THEMED */
+        /* ================================================================ */
+        .chat-widget {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            z-index: 9999;
+            transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        
+        .chat-widget.minimized .chat-window { display: none; }
+        .chat-widget.minimized .chat-bubble-btn { display: flex; }
+        
+        .chat-bubble-btn {
+            width: 56px;
+            height: 56px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #3fb950 0%, #58a6ff 100%);
+            border: none;
+            cursor: pointer;
+            font-size: 24px;
+            color: #fff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 8px 24px rgba(63, 185, 80, 0.4);
+            transition: all 0.3s;
+            position: relative;
+        }
+        
+        .chat-bubble-btn:hover {
+            transform: scale(1.08);
+            box-shadow: 0 12px 32px rgba(63, 185, 80, 0.6);
+        }
+        
+        .chat-bubble-btn .pulse-ring {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            border: 3px solid rgba(63, 185, 80, 0.4);
+            animation: pulse-ring 2s infinite;
+        }
+        
+        @keyframes pulse-ring {
+            0% { transform: scale(1); opacity: 1; }
+            100% { transform: scale(1.4); opacity: 0; }
+        }
+        
+        .chat-notif-dot {
+            position: absolute;
+            top: 4px;
+            right: 4px;
+            width: 12px;
+            height: 12px;
+            background: #f85149;
+            border-radius: 50%;
+            border: 2px solid #fff;
+            display: none;
+        }
+        
+        .chat-window {
+            width: 360px;
+            height: 480px;
+            background: var(--bg-panel);
+            border-radius: 16px;
+            border: 1px solid var(--border-panel);
+            box-shadow: 0 16px 48px rgba(0,0,0,0.4);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            animation: slideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateY(20px) scale(0.95); }
+            to { opacity: 1; transform: translateY(0) scale(1); }
+        }
+        
+        .chat-window-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 14px 16px;
+            background: linear-gradient(135deg, #1a7f37 0%, #0969da 100%);
+            color: #fff;
+            flex-shrink: 0;
+        }
+        
+        .chat-window-header .header-info {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .chat-window-header .avatar {
+            width: 36px;
+            height: 36px;
+            border-radius: 10px;
+            background: rgba(255,255,255,0.2);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+        }
+        
+        .chat-window-header h4 {
+            font-size: 14px;
+            font-weight: 600;
+            margin: 0;
+        }
+        
+        .chat-window-header .status {
+            font-size: 10px;
+            opacity: 0.9;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+        
+        .status-dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: #3fb950;
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.3; }
+        }
+        
+        .chat-actions {
+            display: flex;
+            gap: 4px;
+        }
+        
+        .chat-action-btn {
+            width: 30px;
+            height: 30px;
+            border-radius: 8px;
+            border: none;
+            background: rgba(255,255,255,0.15);
+            color: #fff;
+            cursor: pointer;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+        }
+        
+        .chat-action-btn:hover {
+            background: rgba(255,255,255,0.25);
+        }
+        
+        .chat-messages-area {
+            flex: 1;
+            overflow-y: auto;
+            padding: 14px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            min-height: 0;
+            background: var(--bg-app);
+        }
+        
+        .chat-msg {
+            display: flex;
+            gap: 8px;
+            animation: msgIn 0.25s ease;
+        }
+        
+        @keyframes msgIn {
+            from { opacity: 0; transform: translateY(8px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .chat-msg.user {
+            justify-content: flex-end;
+        }
+        
+        .chat-msg.user .msg-bubble {
+            background: linear-gradient(135deg, #3fb950, #58a6ff);
+            color: #fff;
+            border-radius: 14px;
+            border-bottom-right-radius: 4px;
+        }
+        
+        .bot-avatar-xs {
+            width: 26px;
+            height: 26px;
+            border-radius: 8px;
+            background: linear-gradient(135deg, #3fb950, #58a6ff);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 13px;
+            flex-shrink: 0;
+        }
+        
+        .msg-bubble {
+            padding: 8px 12px;
+            font-size: 12px;
+            line-height: 1.5;
+            max-width: 80%;
+            word-wrap: break-word;
+            background: var(--bg-hollow);
+            color: var(--text-primary);
+            border-radius: 14px;
+            border-bottom-left-radius: 4px;
+            border: 1px solid var(--border-dim);
+        }
+        
+        .msg-time {
+            font-size: 9px;
+            opacity: 0.5;
+            margin-top: 3px;
+        }
+        
+        .typing-indicator .msg-bubble {
+            display: flex;
+            gap: 3px;
+            padding: 12px 16px;
+            align-items: center;
+        }
+        
+        .typing-dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: var(--text-secondary);
+            animation: bounce 1.4s infinite;
+        }
+        .typing-dot:nth-child(2) { animation-delay: 0.2s; }
+        .typing-dot:nth-child(3) { animation-delay: 0.4s; }
+        
+        @keyframes bounce {
+            0%, 60%, 100% { transform: translateY(0); }
+            30% { transform: translateY(-6px); }
+        }
+        
+        .chat-pills-row {
+            display: flex;
+            gap: 4px;
+            padding: 8px 14px;
+            overflow-x: auto;
+            border-top: 1px solid var(--border-dim);
+            flex-shrink: 0;
+        }
+        
+        .chat-pill {
+            padding: 5px 12px;
+            border-radius: 14px;
+            border: 1px solid var(--border-panel);
+            background: var(--bg-hollow);
+            color: var(--text-secondary);
+            cursor: pointer;
+            font-size: 10px;
+            white-space: nowrap;
+            flex-shrink: 0;
+            font-family: inherit;
+            transition: all 0.15s;
+        }
+        
+        .chat-pill:hover {
+            border-color: #3fb950;
+            background: rgba(63, 185, 80, 0.1);
+            color: #3fb950;
+        }
+        
+        .chat-input-row {
+            display: flex;
+            gap: 8px;
+            padding: 10px 14px;
+            border-top: 1px solid var(--border-panel);
+            flex-shrink: 0;
+            align-items: center;
+            background: var(--bg-panel);
+        }
+        
+        .chat-input-row input {
+            flex: 1;
+            padding: 9px 14px;
+            border-radius: 20px;
+            border: 1px solid var(--border-panel);
+            background: var(--bg-hollow);
+            color: var(--text-primary);
+            font-size: 11px;
+            outline: none;
+            font-family: inherit;
+        }
+        
+        .chat-input-row input:focus {
+            border-color: #3fb950;
+            box-shadow: 0 0 0 3px rgba(63, 185, 80, 0.1);
+        }
+        
+        .chat-send-btn {
+            width: 34px;
+            height: 34px;
+            border-radius: 50%;
+            border: none;
+            background: linear-gradient(135deg, #3fb950, #58a6ff);
+            color: #fff;
+            cursor: pointer;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            transition: all 0.15s;
+        }
+        
+        .chat-send-btn:hover {
+            transform: scale(1.08);
+            box-shadow: 0 4px 16px rgba(63, 185, 80, 0.4);
+        }
+        
+        @media (max-width: 500px) {
+            .chat-window { width: calc(100vw - 20px); height: 420px; }
+            .chat-widget { bottom: 10px; right: 10px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="dashboard-shell">
+        
+        <header class="app-navbar">
+            <div class="nav-brand">
+                <svg width="20" height="20" viewBox="0 0 32 32" fill="none">
+                    <path d="M16 2L4 9L16 16L28 9L16 2Z" fill="#3fb950"/>
+                    <path d="M4 23L16 30L28 23" stroke="#58a6ff" stroke-width="2"/>
+                    <path d="M4 16L16 23L28 16" stroke="#58a6ff" stroke-width="2"/>
+                    <circle cx="16" cy="16" r="4" fill="#bc8cff"/>
+                </svg>
+                <span style="font-weight:700;font-size:14px;">MimeaHub</span>
+            </div>
+            <div class="nav-actions">
+                <span class="user-greeting" id="user-greeting"></span>
+                <button id="theme-toggle" class="icon-btn">🌓</button>
+                <select id="language-select" class="lang-pill">
+                    <option value="en">EN</option>
+                    <option value="sw">SW</option>
+                </select>
+                <button class="icon-btn" onclick="handleLogout()">🚪</button>
+            </div>
+        </header>
+        
+        <div class="dashboard-grid">
+            <div class="column">
+                <div class="card">
+                    <div class="viewport-wrapper">
+                        <video id="webcam" autoplay playsinline muted class="hidden"></video>
+                        <img id="image-preview" class="hidden" alt="Plant">
+                        <canvas id="processing-canvas" class="hidden"></canvas>
+                        <div id="placeholder-text" class="stage-placeholder">
+                            <div class="placeholder-icon">🔬</div>
+                            <p>Camera or upload to diagnose</p>
+                        </div>
+                    </div>
+                    <div class="button-row">
+                        <button id="btn-webcam" class="btn btn-primary">📷 Start</button>
+                        <button id="btn-capture" class="btn btn-success hidden">🔍 Scan</button>
+                        <label for="file-upload" class="btn btn-outline">📁</label>
+                        <input type="file" id="file-upload" accept="image/*" hidden>
+                    </div>
+                </div>
+                
+                <div class="card" style="flex:1;min-height:0;">
+                    <div class="card-header"><h3>📊 Results</h3><span id="status" class="status-badge status-ready">Ready</span></div>
+                    <div class="results-scroll" id="prediction-result">
+                        <div class="result-main">
+                            <div><span class="label">Disease</span><h2 id="disease-name">—</h2><div class="location-row">📍 <span id="location-display">—</span></div></div>
+                            <div class="confidence-ring">
+                                <svg viewBox="0 0 36 36"><path class="ring-bg" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"/><path id="ring-progress-fill" class="ring-fill" stroke-dasharray="0,100" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"/></svg>
+                                <span id="confidence-level" class="confidence-text">0%</span>
+                            </div>
+                        </div>
+                        <div class="treatment-cards">
+                            <div class="treatment-card organic"><div class="treatment-icon">🌿</div><div class="treatment-content"><h5>Organic</h5><p id="treatment-organic">—</p></div></div>
+                            <div class="treatment-card chemical"><div class="treatment-icon">🧪</div><div class="treatment-content"><h5>Chemical</h5><p id="treatment-chemical">—</p></div></div>
+                            <div class="treatment-card prevention"><div class="treatment-icon">🛡️</div><div class="treatment-content"><h5>Prevention</h5><p id="treatment-prevention">—</p></div></div>
+                        </div>
+                        <div class="export-row">
+                            <button class="btn btn-outline" onclick="exportPDFReport()">📄 PDF</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="column">
+                <div class="stats-row">
+                    <div class="stat-mini"><span class="stat-mini-value" id="stat-total">0</span><span class="stat-mini-label">Total</span></div>
+                    <div class="stat-mini healthy"><span class="stat-mini-value" id="stat-healthy">0</span><span class="stat-mini-label">Healthy</span></div>
+                    <div class="stat-mini diseased"><span class="stat-mini-value" id="stat-diseased">0</span><span class="stat-mini-label">Sick</span></div>
+                    <div class="stat-mini today"><span class="stat-mini-value" id="stat-today">0</span><span class="stat-mini-label">Today</span></div>
+                </div>
+                
+                <div class="card" style="flex:1;min-height:0;">
+                    <div class="card-header"><h3 id="lbl-history">📋 History</h3><button id="btn-clear-history" class="btn-text">Clear</button></div>
+                    <input type="text" id="search-history" class="search-input" placeholder="🔍 Search...">
+                    <div id="history-list" class="scroll-list"><p class="empty-state">No scans yet</p></div>
+                </div>
+                
+                <div class="card">
+                    <div class="card-header"><h3 id="lbl-analytics">📊 Analytics</h3></div>
+                    <div id="analytics-chart-container" class="analytics-list"><p class="empty-state">Scan to see data</p></div>
+                </div>
+                
+                <div class="card">
+                    <div class="card-header"><h3>📍 Map</h3></div>
+                    <div class="map-filters">
+                        <button class="map-filter-btn active" data-filter="all" onclick="filterMapByDisease('all')">All</button>
+                        <button class="map-filter-btn" data-filter="healthy" onclick="filterMapByDisease('healthy')">✅</button>
+                        <button class="map-filter-btn" data-filter="tomato_late_blight" onclick="filterMapByDisease('tomato_late_blight')">🔴</button>
+                        <button class="map-filter-btn" data-filter="potato_early_blight" onclick="filterMapByDisease('potato_early_blight')">🟠</button>
+                    </div>
+                    <div id="disease-map"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- ================================================================ -->
+    <!-- FLOATING CHAT WIDGET -->
+    <!-- ================================================================ -->
+    <div class="chat-widget minimized" id="chat-widget">
+        <button class="chat-bubble-btn" onclick="toggleChat()" title="Chat with Farm Assistant">
+            <span class="pulse-ring"></span>
+            🤖
+            <span class="chat-notif-dot" id="chat-notif"></span>
+        </button>
+        
+        <div class="chat-window">
+            <div class="chat-window-header">
+                <div class="header-info">
+                    <div class="avatar">🤖</div>
+                    <div>
+                        <h4>Farm Assistant AI</h4>
+                        <span class="status"><span class="status-dot"></span> Always here to help</span>
+                    </div>
+                </div>
+                <div class="chat-actions">
+                    <button class="chat-action-btn" onclick="toggleChat()" title="Minimize">━</button>
+                </div>
+            </div>
+            
+            <div class="chat-messages-area" id="chat-messages">
+                <div class="chat-msg">
+                    <div class="bot-avatar-xs">🤖</div>
+                    <div class="msg-bubble">
+                        👋 Hello farmer! I'm your AI assistant. Ask me about plant diseases, treatments, or farming tips!
+                        <div class="msg-time">Just now</div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="chat-pills-row">
+                <button class="chat-pill" onclick="askQuick('How to treat tomato blight?')">🍅 Blight</button>
+                <button class="chat-pill" onclick="askQuick('Organic pest control')">🌿 Organic</button>
+                <button class="chat-pill" onclick="askQuick('Best watering practices')">💧 Water</button>
+                <button class="chat-pill" onclick="askQuick('Crop rotation guide')">🔄 Rotate</button>
+            </div>
+            
+            <div class="chat-input-row">
+                <input type="text" id="chat-input" placeholder="Ask me anything..." onkeydown="if(event.key==='Enter')sendMessage()">
+                <button class="chat-send-btn" onclick="sendMessage()">➤</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function toggleChat() {
+            const widget = document.getElementById('chat-widget');
+            widget.classList.toggle('minimized');
+            document.getElementById('chat-notif').style.display = 'none';
+            if (!widget.classList.contains('minimized')) {
+                setTimeout(() => document.getElementById('chat-input')?.focus(), 300);
+            }
+        }
+    </script>
+
+    <script src="db.js"></script>
+    <script src="auth.js"></script>
+    <script src="map.js"></script>
+    <script src="pdf.js"></script>
+    <script src="chat.js"></script>
+    <script src="app.js"></script>
+</body>
+</html>
