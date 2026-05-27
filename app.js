@@ -1,6 +1,9 @@
+import { supabase, testSupabaseConnection } from './supabase-client.js';
 // ==========================================================================
 // DISEASE DATABASE
 // ==========================================================================
+
+
 const diseaseDatabase = {
     "en": {
         "loading_model": "Loading AI Engine...",
@@ -316,7 +319,7 @@ async function initializeApp() {
         
         // Initialize map if available
         if (typeof initDiseaseMap === 'function') {
-            setTimeout(initDiseaseMap, 1500);
+            setTimeout(initDiseaseMap, 1000);
         }
         
         console.log('App ready!');
@@ -405,13 +408,9 @@ function displayResult(diseaseKey, confidenceValue) {
         "prevention": "No information available."
     };
 
-    // Unhide ALL possible result containers
+    // Show result UI
     const predictionResult = document.getElementById('prediction-result');
     if (predictionResult) predictionResult.classList.remove('hidden');
-
-    // Also unhide treatment section if it's separate
-    const treatmentSection = document.getElementById('treatment-section');
-    if (treatmentSection) treatmentSection.classList.remove('hidden');
 
     const resultCard = document.getElementById('result-card');
     if (resultCard) resultCard.classList.remove('hidden');
@@ -422,6 +421,7 @@ function displayResult(diseaseKey, confidenceValue) {
     const confidenceLevel = document.getElementById('confidence-level');
     if (confidenceLevel) confidenceLevel.innerText = confidenceValue;
 
+    // Progress ring
     const numericScore = parseFloat(confidenceValue);
     const ringFill = document.getElementById('ring-progress-fill');
     if (ringFill && !isNaN(numericScore)) {
@@ -431,26 +431,42 @@ function displayResult(diseaseKey, confidenceValue) {
 
     if (locationDisplay) locationDisplay.innerText = currentGPS;
 
-    // Set treatment text — with console logging to debug
+    // Treatments
     const tO = document.getElementById('treatment-organic');
     const tC = document.getElementById('treatment-chemical');
     const tP = document.getElementById('treatment-prevention');
-
-    console.log('Treatment elements found:', { tO: !!tO, tC: !!tC, tP: !!tP });
-    console.log('Treatment data:', { organic: data.organic, chemical: data.chemical, prevention: data.prevention });
 
     if (tO) tO.innerText = data.organic;
     if (tC) tC.innerText = data.chemical;
     if (tP) tP.innerText = data.prevention;
 
-    // Unhide parent containers of treatment elements
-    if (tO) {
-        let parent = tO.parentElement;
-        while (parent && parent !== document.body) {
-            parent.classList.remove('hidden');
-            parent = parent.parentElement;
+    // === NEW: Report Outbreak Button ===
+    let outbreakBtn = document.getElementById('report-outbreak-btn');
+    
+    if (!outbreakBtn) {
+        outbreakBtn = document.createElement('button');
+        outbreakBtn.id = 'report-outbreak-btn';
+        outbreakBtn.className = 'btn btn-danger';
+        outbreakBtn.innerHTML = '🚨 Report as Community Outbreak';
+        outbreakBtn.style.marginTop = '15px';
+        
+        // Insert after treatment section or result card
+        const treatmentSection = document.getElementById('treatment-section') || 
+                                document.getElementById('prediction-result');
+        if (treatmentSection) {
+            treatmentSection.appendChild(outbreakBtn);
         }
     }
+
+    outbreakBtn.onclick = () => {
+        if (confirm(currentLanguage === 'sw' ? 
+            'Je, unataka kuripoti ugonjwa huu kwa jamii?' : 
+            'Report this as a community outbreak?')) {
+            
+            saveOutbreak(diseaseKey, confidenceValue, 
+                prompt(currentLanguage === 'sw' ? 'Maoni yako (hiari):' : 'Add notes (optional):') || '');
+        }
+    };
 }
 
 function renderHistoryCards(scanArray) {
@@ -725,6 +741,199 @@ if (themeToggleBtn) {
         showToast(`Theme: ${newTheme} mode`, 'info', 2000);
     });
 }
+
+// ==========================================================================
+// SUPABASE SYNC FOR COMMUNITY OUTBREAKS
+// ==========================================================================
+
+// Save outbreak (local + mark for sync)
+// Improved saveOutbreak
+// ==========================================================================
+// SUPABASE COMMUNITY OUTBREAKS - SYNC SYSTEM
+// ==========================================================================
+
+// Make sure Supabase is imported at the top of app.js
+// import { supabase, testSupabaseConnection } from './supabase-client.js';
+
+// Save outbreak to local DB (pending sync)
+async function saveOutbreak(diseaseKey, confidence, notes = "") {
+    if (!window.db) {
+        showToast('Database not ready yet', 'error');
+        return;
+    }
+
+    const coords = await new Promise(resolve => {
+        if (navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition(
+                pos => resolve(pos.coords),
+                () => resolve(null)
+            );
+        } else resolve(null);
+    });
+
+    const outbreakData = {
+        diseaseKey: diseaseKey.toLowerCase().trim(),
+        diseaseName: diseaseKey.replace(/_/g, ' ').toUpperCase(),
+        cropType: diseaseKey.includes("tomato") ? "Tomato" : "Potato",
+        confidence: parseFloat(confidence.replace('%', '') || 0),
+        latitude: coords ? coords.latitude : null,
+        longitude: coords ? coords.longitude : null,
+        notes: notes || "",
+        timestamp: new Date().toISOString(),
+        syncStatus: "pending",
+        isOutbreak: true
+    };
+
+    const tx = window.db.transaction(["scans"], "readwrite");
+    tx.objectStore("scans").add(outbreakData);
+    
+    tx.oncomplete = () => {
+        loadHistoryFromDB();
+        showToast('Outbreak recorded locally ✅', 'success');
+        if (navigator.onLine) syncPendingOutbreaks();
+    };
+}
+
+// Sync pending outbreaks to Supabase
+async function syncPendingOutbreaks() {
+    if (!window.db || !navigator.onLine) return;
+
+    const tx = window.db.transaction(["scans"], "readonly");
+    const store = tx.objectStore("scans");
+    const request = store.getAll();
+
+    request.onsuccess = async () => {
+        const pending = request.result.filter(s => s.syncStatus === 'pending' && s.isOutbreak);
+
+        for (let scan of pending) {
+            try {
+                const { error } = await supabase.from('outbreaks').insert({
+                    disease_name: scan.diseaseName,
+                    crop_type: scan.cropType,
+                    confidence: scan.confidence,
+                    latitude: scan.latitude,
+                    longitude: scan.longitude,
+                    notes: scan.notes,
+                    sync_status: 'synced'
+                });
+
+                if (!error) {
+                    // Mark as synced
+                    const updateTx = window.db.transaction(["scans"], "readwrite");
+                    const updateStore = updateTx.objectStore("scans");
+                    scan.syncStatus = 'synced';
+                    updateStore.put(scan);
+                }
+            } catch (e) {
+                console.error("Sync failed for one record:", e);
+            }
+        }
+    };
+}
+
+// Get community outbreaks from Supabase
+async function getCommunityOutbreaks() {
+    try {
+        const { data, error } = await supabase
+            .from('outbreaks')
+            .select('*')
+            .order('created_at', { ascending: false })
+            .limit(100);
+
+        if (error) throw error;
+        return data || [];
+    } catch (err) {
+        console.error('Failed to load community outbreaks:', err);
+        return [];
+    }
+}
+
+// Auto sync when back online
+window.addEventListener('online', () => {
+    console.log('🌐 Back online - syncing outbreaks...');
+    syncPendingOutbreaks();
+});
+
+// Make functions global so map.js can access them
+window.saveOutbreak = saveOutbreak;
+window.getCommunityOutbreaks = getCommunityOutbreaks;
+window.syncPendingOutbreaks = syncPendingOutbreaks;
+
+// ==========================================================================
+// REAL-TIME NEARBY OUTBREAK ALERTS
+// ==========================================================================
+
+let userLocation = null;
+
+// Get user's current location
+async function getUserLocation() {
+    return new Promise((resolve) => {
+        if (navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition(
+                (pos) => {
+                    userLocation = { lat: pos.coords.latitude, lng: pos.coords.longitude };
+                    resolve(userLocation);
+                },
+                () => resolve(null)
+            );
+        } else {
+            resolve(null);
+        }
+    });
+}
+
+// Calculate distance in kilometers
+function calculateDistance(lat1, lon1, lat2, lon2) {
+    const R = 6371; // Earth radius in km
+    const dLat = (lat2 - lat1) * Math.PI / 180;
+    const dLon = (lon2 - lon1) * Math.PI / 180;
+    const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+              Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+              Math.sin(dLon/2) * Math.sin(dLon/2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+    return R * c;
+}
+
+// Subscribe to real-time outbreaks
+function startRealtimeAlerts() {
+    getUserLocation();
+
+    const channel = supabase.channel('outbreaks');
+
+    channel.on('postgres_changes', 
+        { event: 'INSERT', schema: 'public', table: 'outbreaks' },
+        (payload) => {
+            const newOutbreak = payload.new;
+            
+            if (!userLocation || !newOutbreak.latitude || !newOutbreak.longitude) return;
+
+            const distance = calculateDistance(
+                userLocation.lat, 
+                userLocation.lng, 
+                newOutbreak.latitude, 
+                newOutbreak.longitude
+            );
+
+            if (distance < 50) { // Within 50km
+                showToast(`🚨 New outbreak nearby! ${newOutbreak.disease_name} (${distance.toFixed(0)}km away)`, 'warning', 8000);
+                
+                // Optional: Play sound
+                // new Audio('notification.mp3').play();
+            }
+        }
+    ).subscribe();
+
+    console.log('🔔 Real-time nearby alerts activated');
+}
+
+// Start alerts when app loads
+window.addEventListener('load', () => {
+    setTimeout(() => {
+        startRealtimeAlerts();
+    }, 3000);
+});
+
+
 
 // ==========================================================================
 // START APP

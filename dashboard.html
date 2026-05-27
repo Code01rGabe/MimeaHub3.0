@@ -14,6 +14,10 @@
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css" />
+<link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css" />
+<script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
+<script src="https://unpkg.com/leaflet.heat@0.2.0/dist/leaflet-heat.js"></script>
 </head>
 <body>
 <div class="dashboard-shell">
@@ -232,13 +236,9 @@
                         <h3>Disease Map</h3>
                     </div>
                 </div>
-                <div class="map-filters">
-                    <button class="map-filter-btn active" data-filter="all" onclick="filterMapByDisease('all')">All</button>
-                    <button class="map-filter-btn" data-filter="healthy" onclick="filterMapByDisease('healthy')">Healthy</button>
-                    <button class="map-filter-btn" data-filter="tomato_late_blight" onclick="filterMapByDisease('tomato_late_blight')">Late Blight</button>
-                    <button class="map-filter-btn" data-filter="potato_early_blight" onclick="filterMapByDisease('potato_early_blight')">Early Blight</button>
+
                 </div>
-                <div id="disease-map"></div>
+                <div id="disease-map" style="height: 500px; width: 100%;"></div>
             </div>
 
         </div>
@@ -320,7 +320,7 @@
 <script src="auth.js"></script>
 <script src="pdf.js"></script>
 <script src="chat.js"></script>
-<script src="app.js"></script>
+<script type="module" src="app.js"></script>
 <script src="map.js"></script>
 </body>
 </html>

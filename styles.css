@@ -1116,3 +1116,20 @@ body {
 }
 
 label.btn-outline { cursor: pointer !important; user-select: none; }
+
+
+.map-btn {
+    width: 100%;
+    padding: 10px 12px;
+    margin: 5px 0;
+    border: none;
+    border-radius: 8px;
+    font-size: 14.5px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.map-btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+}

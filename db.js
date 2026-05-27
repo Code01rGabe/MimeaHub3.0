@@ -7,51 +7,47 @@ const DB_VERSION = 3; // Increased version to handle existing databases
 
 function initDatabase() {
     return new Promise((resolve, reject) => {
-        const request = indexedDB.open(DB_NAME, DB_VERSION);
+        const request = indexedDB.open(DB_NAME, 4); // ← Increased to version 4
         
         request.onupgradeneeded = (e) => {
             const database = e.target.result;
-            console.log('Upgrading database to version', DB_VERSION);
-            
-            // Delete old object stores if they exist
+            console.log('Upgrading database to version', DB_NAME, 4);
+
+            // Delete old stores if they exist
             if (database.objectStoreNames.contains("scans")) {
                 database.deleteObjectStore("scans");
-                console.log('Deleted old scans store');
             }
             if (database.objectStoreNames.contains("preferences")) {
                 database.deleteObjectStore("preferences");
-                console.log('Deleted old preferences store');
             }
-            
-            // Create new scans store
+
+            // Create scans store with new fields
             const scanStore = database.createObjectStore("scans", { 
                 keyPath: "id", 
                 autoIncrement: true 
             });
+            
             scanStore.createIndex("diseaseKey", "diseaseKey", { unique: false });
             scanStore.createIndex("timestamp", "timestamp", { unique: false });
             scanStore.createIndex("coordinates", "coordinates", { unique: false });
-            console.log('Scans store created');
+            scanStore.createIndex("syncStatus", "syncStatus", { unique: false });   // NEW
+            scanStore.createIndex("isOutbreak", "isOutbreak", { unique: false });   // NEW
+
+            console.log('Scans store upgraded with sync support');
             
-            // Create preferences store
+            // Preferences store
             database.createObjectStore("preferences", { keyPath: "key" });
-            console.log('Preferences store created');
         };
         
         request.onsuccess = (e) => {
             window.db = e.target.result;
-            console.log('Database initialized successfully, version:', window.db.version);
+            console.log('Database initialized successfully (v4)');
             window.dispatchEvent(new CustomEvent('databaseReady'));
             resolve(window.db);
         };
         
         request.onerror = (e) => {
             console.error("Database error:", e.target.error);
-            // If version error, try to delete and recreate
-            if (e.target.error.name === 'VersionError') {
-                console.log('Version error detected, attempting to delete and recreate...');
-                deleteAndRecreate();
-            }
             reject(e.target.error);
         };
     });
