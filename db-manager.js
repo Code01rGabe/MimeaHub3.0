@@ -82,5 +82,9 @@ const DatabaseManager = {
     }
 };
 
+
+
+
+
 // Make available globally
 window.DatabaseManager = DatabaseManager;
