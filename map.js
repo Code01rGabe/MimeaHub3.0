@@ -1,8 +1,9 @@
-// map.js - Fixed Visibility + Smaller Markers
+// map.js - Fixed Buttons (Heatmap, Outbreaks Near Me, Fullscreen)
 let map = null;
 let markersCluster = null;
 let heatLayer = null;
 let currentHeatData = [];
+let userLocation = null;
 
 async function initDiseaseMap() {
     const container = document.getElementById('disease-map');
@@ -22,13 +23,34 @@ async function initDiseaseMap() {
     addMapControls();
     addLegendPanel();
     await loadAllMarkers();
+
+    // Auto fetch user location
+    getUserLocation();
+}
+
+// Get user location
+function getUserLocation() {
+    if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(
+            (position) => {
+                userLocation = {
+                    lat: position.coords.latitude,
+                    lng: position.coords.longitude
+                };
+                console.log("✅ User location acquired:", userLocation);
+            },
+            (error) => {
+                console.warn("Location permission denied.");
+                userLocation = { lat: -1.2921, lng: 36.8219 }; // Default Nairobi
+            }
+        );
+    }
 }
 
 function addMapControls() {
     const control = L.control({ position: 'topright' });
     control.onAdd = function () {
         const div = L.DomUtil.create('div');
-        // Reduced padding, font-size, and width to make the overlay smaller
         div.style.cssText = `
             background: rgba(255,255,255,0.98); 
             padding: 8px 10px; 
@@ -55,11 +77,115 @@ function addMapControls() {
     setTimeout(() => {
         document.getElementById('map-filter').addEventListener('change', loadAllMarkers);
         document.getElementById('toggle-heatmap').addEventListener('click', toggleHeatmap);
-        document.getElementById('near-me-btn').addEventListener('click', zoomToUserLocation);
+        document.getElementById('near-me-btn').addEventListener('click', showOutbreaksNearMe);
         document.getElementById('fullscreen-btn').addEventListener('click', toggleFullScreen);
     }, 600);
 }
 
+// ==================== OUTBREAKS NEAR ME (Moves Map + Shows Info) ====================
+async function showOutbreaksNearMe() {
+    if (!userLocation) {
+        alert("Getting your location... Please allow access.");
+        getUserLocation();
+        setTimeout(showOutbreaksNearMe, 1500);
+        return;
+    }
+
+    const nearbyOutbreaks = [];
+
+    // Local scans
+    allCachedScans.forEach(scan => {
+        if (!scan.latitude || !scan.longitude) return;
+        const distance = getDistance(userLocation.lat, userLocation.lng, scan.latitude, scan.longitude);
+        if (distance <= 80) {
+            nearbyOutbreaks.push({
+                disease: scan.diseaseName || scan.diseaseKey,
+                distance: distance.toFixed(1),
+                source: "Your Report"
+            });
+        }
+    });
+
+    // Community outbreaks
+    if (navigator.onLine) {
+        try {
+            const community = await getCommunityOutbreaks();
+            community.forEach(out => {
+                if (!out.latitude || !out.longitude) return;
+                const distance = getDistance(userLocation.lat, userLocation.lng, out.latitude, out.longitude);
+                if (distance <= 80) {
+                    nearbyOutbreaks.push({
+                        disease: out.disease_name || out.diseaseKey,
+                        distance: distance.toFixed(1),
+                        source: "Community"
+                    });
+                }
+            });
+        } catch (e) {}
+    }
+
+    nearbyOutbreaks.sort((a, b) => a.distance - b.distance);
+
+    let message = `📍 Outbreaks Near You (within 80km)\n\n`;
+    if (nearbyOutbreaks.length === 0) {
+        message += "No outbreaks detected nearby.\nKeep monitoring your crops! 🌱";
+    } else {
+        message += `Found ${nearbyOutbreaks.length} outbreak(s):\n\n`;
+        nearbyOutbreaks.slice(0, 8).forEach(item => {
+            message += `• ${item.disease} (${item.distance} km) - ${item.source}\n`;
+        });
+    }
+
+    alert(message);
+
+    // Move and zoom map to user location
+    if (map) {
+        map.flyTo([userLocation.lat, userLocation.lng], 9.5, { duration: 1.5 });
+    }
+}
+
+// Distance calculator
+function getDistance(lat1, lon1, lat2, lon2) {
+    const R = 6371;
+    const dLat = (lat2 - lat1) * Math.PI / 180;
+    const dLon = (lon2 - lon1) * Math.PI / 180;
+    const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+              Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+              Math.sin(dLon/2) * Math.sin(dLon/2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    return R * c;
+}
+
+// ==================== HEATMAP ====================
+function toggleHeatmap() {
+    if (!heatLayer) {
+        heatLayer = L.heatLayer(currentHeatData, {
+            radius: 25,
+            blur: 15,
+            maxZoom: 10,
+            gradient: { 0.4: 'blue', 0.65: 'lime', 1: 'red' }
+        }).addTo(map);
+        this.textContent = "🔥 Hide Heatmap";
+    } else {
+        map.removeLayer(heatLayer);
+        heatLayer = null;
+        this.textContent = "🔥 Show Heatmap";
+    }
+}
+
+// ==================== FULL SCREEN ====================
+function toggleFullScreen() {
+    const elem = document.getElementById('disease-map');
+    if (!document.fullscreenElement) {
+        elem.requestFullscreen().catch(err => console.log(err));
+        this.textContent = "⛶ Exit Full Screen";
+    } else {
+        document.exitFullscreen();
+        this.textContent = "⛶ Full Screen";
+    }
+}
+
+// Keep your original functions
 function addLegendPanel() {
     const legend = L.control({ position: 'bottomright' });
     
@@ -106,7 +232,6 @@ function addLegendPanel() {
     legend.addTo(map);
 }
 
-// Smaller Markers
 function getMarkerColor(diseaseName) {
     const name = (diseaseName || '').toLowerCase();
     if (name.includes('late blight')) return '#d32f2f';
@@ -124,7 +249,7 @@ async function loadAllMarkers() {
 
     const filter = document.getElementById('map-filter')?.value || 'all';
 
-    // Local Outbreaks - Smaller
+    // Local Outbreaks
     const localOutbreaks = allCachedScans.filter(s => s.isOutbreak);
     localOutbreaks.forEach(scan => {
         if (!scan.latitude || !scan.longitude) return;
@@ -141,7 +266,7 @@ async function loadAllMarkers() {
         currentHeatData.push([scan.latitude, scan.longitude, 0.6]);
     });
 
-    // Community Outbreaks - Slightly bigger than local
+    // Community Outbreaks
     if (navigator.onLine) {
         let community = await getCommunityOutbreaks();
         if (filter === 'tomato') community = community.filter(o => o.crop_type?.toLowerCase().includes('tomato'));
@@ -167,9 +292,5 @@ async function loadAllMarkers() {
         });
     }
 }
-
-function toggleHeatmap() { /* same as before */ }
-async function zoomToUserLocation() { /* same as before */ }
-function toggleFullScreen() { /* same as before */ }
 
 window.updateMapMarkers = loadAllMarkers;

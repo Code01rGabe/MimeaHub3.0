@@ -1,7 +1,4 @@
 import { supabase, testSupabaseConnection } from './supabase-client.js';
-// ==========================================================================
-// DISEASE DATABASE
-// ==========================================================================
 
 
 const diseaseDatabase = {

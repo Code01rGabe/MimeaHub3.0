@@ -1,36 +1,71 @@
-# 🌿  MimeaHub — AI-Powered Offline Crop Disease Diagnostic Platform
+# 🌿 MimeaHub 3.0 — AI-Powered Offline Crop Disease Diagnosis
 
-MimeaHub is a lightweight, edge-computed Progressive Web Application (PWA) designed to empower smallholder farmers to diagnose plant leaf diseases instantly in the field, completely independent of an active internet connection. 
+**MimeaHub** is a lightweight, fully offline **Progressive Web App (PWA)** designed to help smallholder farmers diagnose crop diseases instantly using their smartphone cameras — even in remote areas with no internet.
 
-Built using pure native JavaScript and client-side hardware APIs, MimeaHub runs directly inside browser sandboxes on smartphones or laptops without requiring heavy application framework runtimes.
+Built with pure vanilla JavaScript, TensorFlow.js, and IndexedDB, it runs entirely in the browser.
 
----
+![MimeaHub Screenshot](https://github.com/Code01rGabe/MimeaHub3.0/blob/main/preview.png)
 
-## 🚀 Core Engine Architecture & Features
+## ✨ Key Features
 
-### 🧠 1. Client-Side Neural Compute Network
-* Loads a customized, pre-compiled **TensorFlow.js / Teachable Machine** convolutional neural network (`CNN`) model architecture cache directly over local application endpoints.
-* Runs image matrices inside **WebGL compilation backends** for high-efficiency edge processing speeds under 100ms.
+- **Offline AI Disease Detection** — TensorFlow.js model runs 100% on-device
+- **Camera + File Upload** — Real-time leaf scanning with image enhancement
+- **Multilingual Support** — English & Kiswahili
+- **Local Storage** — Full scan history with IndexedDB
+- **Geolocation Tracking** — Records farm/field locations
+- **Treatment Recommendations** — Organic, chemical, and prevention guides
+- **Analytics Dashboard** — Disease trends and statistics
+- **Interactive Disease Map** — Visualizes scan locations
+- **AI Farm Assistant** — Chat interface for farming advice
+- **PDF Report Export** — Professional scan reports
+- **PWA Ready** — Installable on Android/iOS
 
-### 🎛️ 2. Environmental Pre-Processing Filters (Canvas Pipeline)
-* Captures camera streams or file uploads and pipes pixels into an off-screen HTML5 `<canvas>` matrix.
-* Programmatically handles direct red-green-blue (`RGBA`) contrast enhancement filters up to a scale factor of `1.32` to neutralize shadow and light variance in outdoor farms.
+## 🧠 Supported Crops & Diseases
 
-### 📍 3. Geospatial & Offline Data Persistence
-* Uses browser-level **Geolocation APIs** to track latitudinal and longitudinal field tracking tokens down to 4 decimal places.
-* Encapsulates records locally inside a structured asynchronous **IndexedDB** object storefront database engine, allowing offline access to historical scan logs.
+### Tomato
+- Healthy Tomato
+- Tomato Mosaic Virus (ToMV)
+- Tomato Yellow Leaf Curl Virus (TYLCV)
+- Tomato Spider Mites
+- Septoria Leaf Spot
+- Tomato Leaf Mold
+- Late Blight
+- Early Blight
+- Bacterial Spot
 
-### 📊 4. Trend Analytics Dashboard & Search Filters
-* Computes multi-variant statistics from the client database and compiles structural metric progress charts completely via internal script calculations.
-* Implements rapid fuzzy text parsing filters to search histories by disease title, time signature, or positional tokens.
+### Potato
+- Healthy Potato
+- Late Blight
+- Early Blight
 
----
+## 🚀 Technology Stack
 
-## Technology Stack Specs
+- **Frontend**: HTML5, CSS3, Vanilla JavaScript (ES6+)
+- **AI/ML**: TensorFlow.js + Teachable Machine
+- **Storage**: IndexedDB (via db.js)
+- **Maps**: Leaflet.js
+- **PDF Generation**: jsPDF
+- **Offline**: Service Worker (`sw.js`)
+- **Styling**: Custom modern dark UI (with light mode support)
 
-* **Frontend Engine:** HTML5, CSS3, Pure Vanilla JavaScript (ECMAScript 6)
-* **AI Computation Layer:** TensorFlow.js Core library, Teachable Machine Helper Libraries
-* **Local Transaction Database:** Structured IndexedDB API
-* **Deployment Topology:** GitHub Pages Serverless Pipelines, PWA Service Worker Cache Layer
+## 📁 Project Structure
 
-
+```bash
+MimeaHub3.0/
+├── index.html              # Landing page
+├── dashboard.html          # Main app interface
+├── styles.css              # Design system
+├── app.js                  # Core logic + AI inference
+├── db.js                   # IndexedDB management
+├── db-manager.js           # Database utilities
+├── auth.js                 # Simple auth simulation
+├── chat.js                 # AI assistant chat
+├── map.js                  # Leaflet disease map
+├── pdf.js                  # PDF report generation
+├── sw.js                   # PWA Service Worker
+├── landing.js              # Landing page scripts
+├── supabase-client.js      # (Optional) Supabase integration
+└── model/                  # TensorFlow.js model files
+    ├── model.json
+    ├── metadata.json
+    └── weights.bin
