@@ -1133,15 +1133,28 @@ label.btn-outline { cursor: pointer !important; user-select: none; }
     transform: translateY(-1px);
     box-shadow: 0 4px 12px rgba(0,0,0,0.15);
 }
-
+/*Tomato Last Scan*/
 .hero-float {
-    position: absolute;
+    position:absolute;
     bottom: 128px;
-    left: 365px;
+    left: 364px;
     background: #ff0303b4;
     border: 1px solid rgba(255, 255, 255, 0.08);
     border-radius: 14px;
     padding: 14px 18px;
     z-index: 3;
     box-shadow: 0 10px 3
+}
+/*Logo*/
+img {
+    border-radius: 14px;
+    height:105px;
+    width:105px;
+}
+
+/*Badge Fixing*/
+.hero-badge {
+    position:relative;
+    left: 475px;
+
 }
