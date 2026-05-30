@@ -154,7 +154,7 @@ function getLocalResponse(message) {
     }
     
     if (msg.includes('tomato') && msg.includes('spot')) {
-        return "🍅 Tomato Septoria Leaf Spot:\n\n• Symptoms: Small dark spots with light centers on lower leaves first\n• Organic: Remove infected leaves, apply copper spray\n• Chemical: Chlorothalonil every 7-14 days\n• Prevention: Water at base, mulch heavily, improve air circulation";
+        return "🍅 Tomato Septorifa Leaf Spot:\n\n• Symptoms: Small dark spots with light centers on lower leaves first\n• Organic: Remove infected leaves, apply copper spray\n• Chemical: Chlorothalonil every 7-14 days\n• Prevention: Water at base, mulch heavily, improve air circulation";
     }
     
     if (msg.includes('tomato') && msg.includes('wilt')) {
