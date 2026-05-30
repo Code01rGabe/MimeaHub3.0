@@ -759,13 +759,17 @@ async function saveOutbreak(diseaseKey, confidence, notes = "") {
         return;
     }
 
+    // Get location
     const coords = await new Promise(resolve => {
         if (navigator.geolocation) {
             navigator.geolocation.getCurrentPosition(
                 pos => resolve(pos.coords),
-                () => resolve(null)
+                () => resolve(null),
+                { timeout: 10000, enableHighAccuracy: false }
             );
-        } else resolve(null);
+        } else {
+            resolve(null);
+        }
     });
 
     const outbreakData = {
@@ -781,16 +785,42 @@ async function saveOutbreak(diseaseKey, confidence, notes = "") {
         isOutbreak: true
     };
 
-    const tx = window.db.transaction(["scans"], "readwrite");
-    tx.objectStore("scans").add(outbreakData);
-    
-    tx.oncomplete = () => {
-        loadHistoryFromDB();
-        showToast('Outbreak recorded locally ✅', 'success');
-        if (navigator.onLine) syncPendingOutbreaks();
-    };
-}
+    try {
+        const tx = window.db.transaction(["scans"], "readwrite");
+        const store = tx.objectStore("scans");
+        
+        await new Promise((resolve, reject) => {
+            const request = store.add(outbreakData);
+            request.onsuccess = () => resolve();
+            request.onerror = () => reject(request.error);
+        });
 
+        loadHistoryFromDB();
+
+        // Better user feedback
+        if (navigator.onLine) {
+            showToast('Outbreak recorded ✅ Syncing to server...', 'success');
+            
+            // Try to sync immediately
+            syncPendingOutbreaks()
+                .then(successCount => {
+                    if (successCount > 0) {
+                        showToast(`Successfully synced to server`, 'success');
+                    }
+                })
+                .catch(err => {
+                    console.error('Sync failed:', err);
+                    showToast('Saved locally • Will sync later', 'warning');
+                });
+        } else {
+            showToast('Outbreak saved locally (offline)', 'success');
+        }
+
+    } catch (error) {
+        console.error('Failed to save outbreak:', error);
+        showToast('Failed to save outbreak', 'error');
+    }
+}
 // Sync pending outbreaks to Supabase
 async function syncPendingOutbreaks() {
     if (!window.db || !navigator.onLine) return;
