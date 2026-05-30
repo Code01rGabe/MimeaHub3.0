@@ -823,41 +823,47 @@ async function saveOutbreak(diseaseKey, confidence, notes = "") {
 }
 // Sync pending outbreaks to Supabase
 async function syncPendingOutbreaks() {
-    if (!window.db || !navigator.onLine) return;
+    if (!navigator.onLine) return 0;
 
-    const tx = window.db.transaction(["scans"], "readonly");
+    const tx = window.db.transaction(["scans"], "readwrite");
     const store = tx.objectStore("scans");
-    const request = store.getAll();
+    
+    const pending = await new Promise((resolve, reject) => {
+        const request = store.getAll();
+        request.onsuccess = () => resolve(request.result);
+        request.onerror = () => reject(request.error);
+    });
 
-    request.onsuccess = async () => {
-        const pending = request.result.filter(s => s.syncStatus === 'pending' && s.isOutbreak);
+    const outbreaksToSync = pending.filter(o => o.syncStatus === "pending");
+    if (outbreaksToSync.length === 0) return 0;
 
-        for (let scan of pending) {
-            try {
-                const { error } = await supabase.from('outbreaks').insert({
-                    disease_name: scan.diseaseName,
-                    crop_type: scan.cropType,
-                    confidence: scan.confidence,
-                    latitude: scan.latitude,
-                    longitude: scan.longitude,
-                    notes: scan.notes,
-                    sync_status: 'synced'
-                });
+    let successCount = 0;
 
-                if (!error) {
-                    // Mark as synced
-                    const updateTx = window.db.transaction(["scans"], "readwrite");
-                    const updateStore = updateTx.objectStore("scans");
-                    scan.syncStatus = 'synced';
-                    updateStore.put(scan);
-                }
-            } catch (e) {
-                console.error("Sync failed for one record:", e);
+    for (const outbreak of outbreaksToSync) {
+        try {
+            const response = await fetch('/api/outbreaks', {  // ← Change to your endpoint
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(outbreak)
+            });
+
+            if (response.ok) {
+                // Mark as synced
+                outbreak.syncStatus = "synced";
+                await store.put(outbreak);
+                successCount++;
             }
+        } catch (err) {
+            console.error('Failed to sync one outbreak:', err);
         }
-    };
-}
+    }
 
+    if (successCount > 0) {
+        loadHistoryFromDB(); // Refresh UI
+    }
+
+    return successCount;
+}
 // Get community outbreaks from Supabase
 async function getCommunityOutbreaks() {
     try {
